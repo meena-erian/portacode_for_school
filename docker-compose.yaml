@@ -1,0 +1,12 @@
+services:
+  workshop-device:
+    build:
+      context: .
+    image: portacode/workshop-device:latest
+    environment:
+      PORTACODE_GATEWAY: ${PORTACODE_GATEWAY:-wss://portacode.com/gateway}
+      PORTACODE_PAIRING_CODE: ${PORTACODE_PAIRING_CODE:?Set PORTACODE_PAIRING_CODE before deploying}
+    deploy:
+      replicas: ${PORTACODE_REPLICAS:-3}
+      restart_policy:
+        condition: on-failure
