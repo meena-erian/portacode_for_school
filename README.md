@@ -1,53 +1,77 @@
-## Portacode Workshop Environment
+# **PortaCode Classroom Workshops**
 
-This folder lets you run a classroom full of Portacode devices with **one pairing code** and **one compose file**:
+*(Turn any PC into a full coding lab — even for students on phones.)*
 
-1. `export PORTACODE_PAIRING_CODE=7351`
-2. (Optional) edit `deploy.replicas` in `docker-compose.yaml` if you need more than 3 students
-3. `docker compose up -d`
+PortaCode lets students code from **any device**—smartphones, tablets, Chromebooks, whatever they have.
+You run a single machine with Docker, and PortaCode gives each student their own isolated development environment with:
 
-All containers pair with the teacher’s account, you approve the requests once, and then you use the standard dashboard workflow to transfer each device to the right student. That’s it.
+* a terminal
+* a VS-Code–like editor
+* an integrated AI assistant
+* File explorer with version control
 
-### Prerequisites
+---
 
-- Docker Engine with the compose plugin (`docker compose`)
-- Any modern Linux/macOS host (no bind mounts required)
-- One active pairing code from the Portacode dashboard
+# **Two ways to set up your workshop**
 
-### Build & Deploy
+This repository offers two ready-to-use setups:
 
-```bash
-cd portacode_for_school
-docker build -t portacode/workshop-device:latest .
-export PORTACODE_PAIRING_CODE=7351
-docker compose up -d
-```
+1. **Quick & Easy** → `temporary_workspace/`
+2. **Persistent & Protected** → `persistent_workspace/`
 
-The compose file already includes `deploy.replicas: 3`. Increase or decrease that value as needed, or override it on the command line:
+Both methods use the same simple PortaCode flow:
 
-```bash
-docker compose up -d --scale workshop-device=10
-```
+1. Open your PortaCode dashboard
+2. Click **“Pair Device”**
+3. Enter the temporary pairing code into the machine
+4. Approve the pairing request on the dashboard
+5. Transfer each device to a student’s email (so only they can access it)
 
-Every container shares the same pairing code, so you’ll get 10 requests at once. Approve them, transfer ownership per student, and start teaching.
 
-### Customising
+Below is the difference between the two setups.
 
-- `PORTACODE_DEVICE_NAME` (optional): set it before `docker compose up` to control the label shown in the dashboard. By default, each container uses `Workshop-Device-<slot>` (slot is derived from the container hostname).
-- `PORTACODE_GATEWAY`: override if you run a self-hosted gateway.
+---
 
-### Operations
+## **1) Quick & Easy (temporary)**
 
-- **Logs**: `docker compose logs -f workshop-device` shows every student container streaming into one log window.
-- **Restart/Reset**: `docker compose down && docker compose up -d` tears down and recreates all devices. Pairing survives because the CLI stores its keys inside each container.
-- **Scaling Mid-Class**: `docker compose up -d --scale workshop-device=12` brings new devices online instantly—they reuse the exported pairing code, so you just approve the new requests.
+**Folder:** [`temporary_workspace/`](temporary_workspace/)
 
-### Cleanup
+* Requires only Docker + Docker Compose
+* One command and all student containers start
+* Perfect for fast workshops or one-off events
 
-When the workshop ends:
+**BUT:**
 
-```bash
-docker compose down
-```
+* Student files stay inside containers (easy to lose since anything that recreates the container deletes everything inside the container)
+* No disk-space limits → Although one student cannot access anybody else's files, one student can still fill up the disk for everyone
 
-No host folders remain; all data lives inside the containers. You can rebuild/redeploy anytime with a new pairing code. !*** End Patch
+---
+
+## **2) Persistent & Protected**
+
+**Folder:** [`persistent_workspace/`](persistent_workspace/)
+
+* Each student gets their own **persistent folder** on the host
+* Their work survives restarts and is eaily accessible by the teacher without having to attach to the container
+* Hard disk-space limits prevent students from breaking the system by filling the disk space
+
+**BUT:**
+
+* Requires a slightly more advanced setup and might be slightly harder to manage
+
+---
+
+## **Which one should you choose?**
+
+| Setup                      | Best For                           | Pros                       | Cons                           |
+| -------------------------- | ---------------------------------- | -------------------------- | ------------------------------ |
+| **Quick & Easy**           | Short workshops, beginners         | Fast, simple               | No persistence, no disk limits |
+| **Persistent & Protected** | Longer classes, repeated workshops | Safe, reliable, persistent | Slightly more setup            |
+
+---
+
+## **Next steps**
+
+* Go to **[`temporary_workspace/`](temporary_workspace/)** for the Quick & Easy version
+* Go to **[`persistent_workspace/`](persistent_workspace/)** for the Persistent & Protected setup
+

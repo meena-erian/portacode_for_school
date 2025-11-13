@@ -10,3 +10,10 @@ services:
       replicas: ${PORTACODE_REPLICAS:-3}
       restart_policy:
         condition: on-failure
+      resources:
+        limits:
+          cpus: '0.50'        # max 0.5 CPU
+          memory: 512M        # hard RAM cap
+        reservations:
+          cpus: '0.25'        # scheduler reserve
+          memory: 256M        # minimum guaranteed
