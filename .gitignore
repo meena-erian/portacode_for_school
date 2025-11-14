@@ -1,0 +1,4 @@
+persistent_workspace/students
+persistent_workspace/docker-compose.yaml
+.env
+classroom_state.json
