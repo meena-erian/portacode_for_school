@@ -17,7 +17,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 RUN pip install --upgrade pip && \
-    pip install portacode
+    pip install portacode===1.3.39.dev3
 
 RUN useradd -m -s /bin/bash student && \
     echo "student ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers

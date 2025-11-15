@@ -53,7 +53,6 @@ Below is the difference between the two setups.
 
 * Each student gets their own **persistent folder** on the host
 * Their work survives restarts and is eaily accessible by the teacher without having to attach to the container
-* Hard disk-space limits prevent students from breaking the system by filling the disk space
 
 **BUT:**
 

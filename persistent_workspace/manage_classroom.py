@@ -15,9 +15,9 @@ import shutil
 import subprocess
 import sys
 import textwrap
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 if sys.version_info < (3, 10):
     sys.stderr.write(
@@ -34,6 +34,7 @@ STATE_FILE = BASE_DIR / "classroom_state.json"
 
 DEFAULT_GATEWAY = "wss://portacode.com/gateway"
 DEFAULT_PREFIX = "Workshop-Device"
+DEFAULT_CONTAINER_PROJECT_PATH = "/home/student/workspace"
 
 
 @dataclass
@@ -44,6 +45,7 @@ class Student:
     service_name: str
     pairing_code: str
     host_path: Path
+    project_paths: List[str] = field(default_factory=lambda: [DEFAULT_CONTAINER_PROJECT_PATH])
 
 
 def prompt(text: str, *, default: Optional[str] = None, required: bool = False) -> str:
@@ -158,6 +160,7 @@ def build_compose_yaml(students: List[Student]) -> str:
         portacode_rel = f"{root_rel}/.portacode"
         logs_rel = f"{root_rel}/logs"
         local_share_portacode_rel = f"{root_rel}/.local/share/portacode"
+        project_paths_value = ":".join(student.project_paths)
         lines.extend(
             [
                 f"  {student.service_name}:",
@@ -169,6 +172,7 @@ def build_compose_yaml(students: List[Student]) -> str:
                 "      PORTACODE_GATEWAY: ${PORTACODE_GATEWAY}",
                 f"      PORTACODE_PAIRING_CODE: {json.dumps(student.pairing_code)}",
                 f"      PORTACODE_DEVICE_NAME: {json.dumps(student.device_name)}",
+                f"      PORTACODE_PROJECT_PATHS: {json.dumps(project_paths_value)}",
                 "    volumes:",
                 f"      - ./{host_rel}:/home/student/workspace",
                 f"      - ./{portacode_rel}:/home/student/.portacode",
@@ -193,7 +197,7 @@ def run_compose_up(detached: bool = True) -> None:
         ) from exc
 
 
-def serialize_student(student: Student) -> Dict[str, str]:
+def serialize_student(student: Student) -> Dict[str, Any]:
     return {
         "index": student.index,
         "slug": student.slug,
@@ -201,10 +205,11 @@ def serialize_student(student: Student) -> Dict[str, str]:
         "service_name": student.service_name,
         "pairing_code": student.pairing_code,
         "workspace": os.path.relpath(student.host_path, BASE_DIR),
+        "project_paths": student.project_paths,
     }
 
 
-def deserialize_student(data: Dict[str, str]) -> Student:
+def deserialize_student(data: Dict[str, Any]) -> Student:
     return Student(
         index=int(data["index"]),
         slug=data["slug"],
@@ -212,6 +217,7 @@ def deserialize_student(data: Dict[str, str]) -> Student:
         service_name=data["service_name"],
         pairing_code=data["pairing_code"],
         host_path=BASE_DIR / data["workspace"],
+        project_paths=list(data.get("project_paths") or [DEFAULT_CONTAINER_PROJECT_PATH]),
     )
 
 
@@ -242,6 +248,8 @@ def load_state() -> Optional[Dict]:
             item["index"] = _infer_index(item, data)
         if "workspace" not in item:
             item["workspace"] = item.get("host_path") or item["slug"]
+        if "project_paths" not in item or not isinstance(item.get("project_paths"), list):
+            item["project_paths"] = [DEFAULT_CONTAINER_PROJECT_PATH]
         if not item.get("slug"):
             slug_candidate = item.get("service_name") or slugify(item.get("device_name", ""))
             if not slug_candidate:
@@ -256,7 +264,7 @@ def load_state() -> Optional[Dict]:
     return data
 
 
-def _infer_index(student: Dict[str, str], state: Dict) -> int:
+def _infer_index(student: Dict[str, Any], state: Dict) -> int:
     slug = student.get("slug", "")
     match = re.search(r"(\d+)$", slug)
     if match:
@@ -290,6 +298,7 @@ def build_student(
         service_name=slug,
         pairing_code=pairing_code,
         host_path=STUDENTS_DIR / slug / "workspace",
+        project_paths=[DEFAULT_CONTAINER_PROJECT_PATH],
     )
 
 
